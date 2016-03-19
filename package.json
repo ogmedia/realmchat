@@ -9,7 +9,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "express": "^4.13.4",
     "firebase": "^2.4.1",
-    "gulp": "^3.9.1"
+    "gulp": "^3.9.1",
+    "hapi": "^13.2.1",
+    "three": "^0.75.0"
   }
 }
