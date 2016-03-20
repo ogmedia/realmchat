@@ -3,14 +3,72 @@ console.log = console.log || function(){};
 console.log('hey');
 
 // 'use strict';
+var grid_bounds = 500;
 
 (function(){
 	var playersRef = new Firebase('https://realmchat.firebaseio.com/players');
+
+	var player = {
+		data:{},
+		cube:null
+	};
+
+	var raycaster = new THREE.Raycaster(); // create once
+	var mouse = new THREE.Vector2(); // create once
+
+	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    function onDocumentMouseDown( event ) {
+		mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
+		mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
+		console.log('clicked');
+		raycaster.setFromCamera( mouse, camera );
+
+		var intersects = raycaster.intersectObjects( scene.children );
+		console.log(intersects);
+	};
+
+	var draw_player = function(position){
+		var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
+		var material = new THREE.MeshLambertMaterial( { color: 0xffff00, overdraw: 0.5 } );
+		
+		player.cube = new THREE.Mesh( geometry, material );
+		player.cube.position.x = position.x;
+		player.cube.position.y = position.y;
+		player.cube.position.z = 1; 
+
+		scene.add( player.cube );	
+	};
+
+	var set_random_position = function(uid){
+		var new_pos = {};
+		var r = Math.floor( Math.random() * 2 + 1 );
+
+		new_pos.x = Math.floor( ( Math.random() * 1000 - 500 ) / 50 ) * 50 + 25;
+		new_pos.y = ( r * 50 ) / 2;
+
+		playersRef.child(uid).child('position').set(new_pos);
+	};
+
+	var last_position = function(uid){
+		playersRef.child(uid).child('position').once('value',function(posSnap){
+			var last_pos = posSnap.val();
+			if(!last_pos ){
+				//console.log('no position set yet');
+				set_random_position(uid);
+			}else{
+				//console.log('we have a position!');
+			}
+		});
+	};
 	var set_presence = function(profile,uid){
 		var user_obj = {name:profile.displayName, avatar:profile.profileImageURL};
 		playersRef.child(uid).child('profile').set(user_obj);
 		$('#logins').hide();
+
+		//last position check
+		last_position(uid);
 	};
+
 	var authTwitter = function(){
 		playersRef.authWithOAuthPopup("twitter", function(error, authData) {
 		  if (error) {
@@ -51,9 +109,9 @@ console.log('hey');
 
 		new gameInfoView();
 
-			playersRef.onAuth(function(auth){
-				if(auth){
- 				console.log(auth);
+		playersRef.onAuth(function(auth){
+			if(auth){
+ 				//console.log(auth);
  				playersRef.child(auth.uid).child('lastActive').set(Firebase.ServerValue.TIMESTAMP);
  				if(auth.provider === 'facebook'){
 				    set_presence(auth.facebook,auth.uid);
@@ -62,9 +120,14 @@ console.log('hey');
  				if(auth.provider === 'twitter'){
  					set_presence(auth.twitter,auth.uid);
  				}
- 				console.log('hide buttons here');
-				}
-			});
+ 				//console.log('hide buttons here');
+
+ 				playersRef.child(auth.uid).child('position').on('value',function(playerPosSnap){
+ 					var pos = playerPosSnap.val();
+ 					draw_player(pos);
+ 				});
+			}
+		});
 
 	};
 
@@ -72,10 +135,23 @@ console.log('hey');
 
 	var container, stats;
 	var camera, scene, renderer;
+
+	var statistics = function(){
+		stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.top = '0px';
+		stats.domElement.style.right = '0px';
+
+		$('#header').append( stats.domElement );	
+	};
+	statistics();
+
 	init();
 	animate();
 
 	function init() {
+
+
 		container = document.createElement( 'div' );
 		//document.body.appendChild( container );
 		$('#game-zone').append(container);
@@ -88,41 +164,13 @@ console.log('hey');
 
 		var grid = function(){
 			// Grid
-			var size = 500, step = 50;
-			var geometry = new THREE.Geometry();
-			for ( var i = - size; i <= size; i += step ) {
-				geometry.vertices.push( new THREE.Vector3( - size, 0, i ) );
-				geometry.vertices.push( new THREE.Vector3(   size, 0, i ) );
-				geometry.vertices.push( new THREE.Vector3( i, 0, - size ) );
-				geometry.vertices.push( new THREE.Vector3( i, 0,   size ) );
-			}
-			var material = new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.2 } );
-			var line = new THREE.LineSegments( geometry, material );
-			//should add label here with same dimensions/positions
-			scene.add( line );
+			var size = grid_bounds, step = 50;
+			var gridHelper = new THREE.GridHelper( size, step );
+			scene.add( gridHelper );
 		};
 
 		var earth = function(){
 
-		};
-
-		var cubes = function(){
-			console.log('rendering cubes');
-			//these will be users - pull from firebase
-			//ortho
-
-			// Cubes
-			var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
-			var material = new THREE.MeshLambertMaterial( { color: 0xffffff, overdraw: 0.5 } );
-			for ( var i = 0; i < 10; i ++ ) {
-				//console.log('cube: ' + i);
-				var cube = new THREE.Mesh( geometry, material );
-				cube.scale.y = Math.floor( Math.random() * 2 + 1 );
-				cube.position.x = Math.floor( ( Math.random() * 1000 - 500 ) / 50 ) * 50 + 25;
-				cube.position.y = ( cube.scale.y * 50 ) / 2;
-				cube.position.z = Math.floor( ( Math.random() * 1000 - 500 ) / 50 ) * 50 + 25;
-				scene.add( cube );
-			}
 		};
 
 		var lighting = function(){
@@ -138,15 +186,6 @@ console.log('hey');
 	
 		};
 
-		var statistics = function(){
-			stats = new Stats();
-			stats.domElement.style.position = 'absolute';
-			stats.domElement.style.top = '0px';
-			stats.domElement.style.right = '0px';
-
-			$('#header').append( stats.domElement );	
-		};
-
 		var rendering = function(){
 			renderer = new THREE.CanvasRenderer();
 			renderer.setClearColor( 0xf0f0f0 );
@@ -156,12 +195,12 @@ console.log('hey');
 		};
 
 		grid();
-		cubes();
 		lighting();
 		rendering();
-		statistics();
 		//
 		window.addEventListener( 'resize', onWindowResize, false );
+
+
 	}
 	function onWindowResize() {
 		camera.left = window.innerWidth / - 2;
@@ -172,6 +211,7 @@ console.log('hey');
 		renderer.setSize( window.innerWidth, window.innerHeight );
 	}
 	//
+
 	function animate() {
 		requestAnimationFrame( animate );
 		stats.begin();
@@ -179,10 +219,11 @@ console.log('hey');
 		stats.end();
 	}
 	function render() {
-		var timer = Date.now() * 0.0001;
-		camera.position.x = Math.cos( timer ) * 200;
-		camera.position.z = Math.sin( timer ) * 200;
+		//var timer = Date.now() * 0.0001;
+		//camera.position.x = Math.cos( timer ) * 200;
+		//camera.position.z = Math.sin( timer ) * 200;
 		camera.lookAt( scene.position );
 		renderer.render( scene, camera );
 	}
 })(THREE);
+
