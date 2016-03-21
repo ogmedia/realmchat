@@ -1,43 +1,65 @@
-console.log = console.log || function(){};
-
-console.log('hey');
-
-// 'use strict';
-var grid_bounds = 500;
-
 (function(){
-	var playersRef = new Firebase('https://realmchat.firebaseio.com/players');
 
-	var player = {
-		data:{},
-		cube:null
-	};
+	var grid_bounds = 500;
+
+	var playersRef = new Firebase('https://realmchat.firebaseio.com/players');
+	var ME = null;
+
+	//model and collection
+	var player = Backbone.Model.extend({
+		player_model: {},
+		initialize: function(){
+			//console.log('NEW PLAYER MODEL');
+			var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
+			var material = new THREE.MeshLambertMaterial( { color: 0xffff00, overdraw: 0.5 } );
+			
+			this.player_model.cube = new THREE.Mesh( geometry, material );
+			this.player_model.cube.position.x = this.get('position').x;
+			this.player_model.cube.position.y = 2;
+			this.player_model.cube.position.z = this.get('position').z;
+
+			scene.add( this.player_model.cube );
+		}
+	});
+	var playersCollection = Backbone.Firebase.Collection.extend({
+		model:player,
+		url: "https://realmchat.firebaseio.com/players"
+	});
+	var players = new playersCollection();
+
+	players.on('add',function(player){
+		//console.log( player.get('name') + ' added to collection');
+		if(player.get('position')){
+			console.log( player.get('position') );
+		}
+	});
+	players.on('change',function(player){
+		console.log(player);
+		console.log(scene.children);
+		player.player_model.cube.position.set( player.get('position') );
+	});
+
+	// var get_init_players = function(){
+	// 	playersRef.once('value',function(playerSnap){
+	// 		playerSnap.forEach(function(p){
+	// 			var p_d = new player({
+	// 				id: p.key(), 
+	// 				name: p.child('profile').child('name').val(),
+	// 				avatar: p.child('profile').child('avatar').val(),
+	// 				position: p.child('position').val() || null
+	// 			});
+
+	// 			players.add( p_d );
+	// 		});
+	// 	},function(err){
+	// 		if(err)
+	// 			throw new Error(err);
+	// 	});
+	// };
+	// get_init_players();
 
 	var raycaster = new THREE.Raycaster(); // create once
 	var mouse = new THREE.Vector2(); // create once
-
-	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-    function onDocumentMouseDown( event ) {
-		mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
-		mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
-		console.log('clicked');
-		raycaster.setFromCamera( mouse, camera );
-
-		var intersects = raycaster.intersectObjects( scene.children );
-		console.log(intersects);
-	};
-
-	var draw_player = function(position){
-		var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
-		var material = new THREE.MeshLambertMaterial( { color: 0xffff00, overdraw: 0.5 } );
-		
-		player.cube = new THREE.Mesh( geometry, material );
-		player.cube.position.x = position.x;
-		player.cube.position.y = position.y;
-		player.cube.position.z = 1; 
-
-		scene.add( player.cube );	
-	};
 
 	var set_random_position = function(uid){
 		var new_pos = {};
@@ -63,6 +85,7 @@ var grid_bounds = 500;
 	var set_presence = function(profile,uid){
 		var user_obj = {name:profile.displayName, avatar:profile.profileImageURL};
 		playersRef.child(uid).child('profile').set(user_obj);
+		$('#profile').text(profile.displayName);
 		$('#logins').hide();
 
 		//last position check
@@ -102,7 +125,7 @@ var grid_bounds = 500;
 				this.render();
 			},
 			render: function(){
-				this.$el.append('<a href="http://realmchat.github.io" target="_blank">realmchat</a>');
+				this.$el.append('<a href="http://realmchat.github.io" target="_blank">realmchat</a> <span id="profile"></span>');
 				this.$el.append('<span id="logins"><button class="btn btn-default" id="twitter-login">Twitter</button> | <button class="btn btn-default" id="facebook-login">Facebook</button></span>');
 			}
 		});
@@ -121,11 +144,7 @@ var grid_bounds = 500;
  					set_presence(auth.twitter,auth.uid);
  				}
  				//console.log('hide buttons here');
-
- 				playersRef.child(auth.uid).child('position').on('value',function(playerPosSnap){
- 					var pos = playerPosSnap.val();
- 					draw_player(pos);
- 				});
+ 				ME = auth;
 			}
 		});
 
@@ -135,6 +154,29 @@ var grid_bounds = 500;
 
 	var container, stats;
 	var camera, scene, renderer;
+
+	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    function onDocumentMouseDown( event ) {
+		mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
+		mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
+		//console.log('clicked');
+		//console.log(mouse);
+		raycaster.setFromCamera( mouse, camera );
+
+		var intersects = raycaster.intersectObjects( scene.children );
+		//console.log(intersects);
+		if(intersects.length > 0){
+			//update the position
+			//
+			var new_pos = {
+				x: intersects[0].point.x,
+				y: intersects[0].point.y,
+				z: intersects[0].point.z
+			};
+
+			playersRef.child(ME.uid).child('position').set(new_pos);
+		}
+	}
 
 	var statistics = function(){
 		stats = new Stats();
@@ -167,6 +209,12 @@ var grid_bounds = 500;
 			var size = grid_bounds, step = 50;
 			var gridHelper = new THREE.GridHelper( size, step );
 			scene.add( gridHelper );
+
+			//mesh for grid
+			var geometry = new THREE.BoxGeometry( 1000, 0, 1000 );
+			var material = new THREE.MeshBasicMaterial( { color: 0xffff00,wireframe:true } );
+			var mesh = new THREE.Mesh( geometry, material );
+			scene.add( mesh );
 		};
 
 		var earth = function(){
@@ -219,9 +267,9 @@ var grid_bounds = 500;
 		stats.end();
 	}
 	function render() {
-		//var timer = Date.now() * 0.0001;
-		//camera.position.x = Math.cos( timer ) * 200;
-		//camera.position.z = Math.sin( timer ) * 200;
+		var timer = Date.now() * 0.00001;
+		camera.position.x = Math.cos( timer ) * 200;
+		camera.position.z = Math.sin( timer ) * 200;
 		camera.lookAt( scene.position );
 		renderer.render( scene, camera );
 	}
