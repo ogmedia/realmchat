@@ -13,12 +13,12 @@
 			var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
 			var material = new THREE.MeshLambertMaterial( { color: 0xffff00, overdraw: 0.5 } );
 			
-			this.player_model.cube = new THREE.Mesh( geometry, material );
-			this.player_model.cube.position.x = this.get('position').x;
-			this.player_model.cube.position.y = 2;
-			this.player_model.cube.position.z = this.get('position').z;
+			this.player_model = new THREE.Mesh( geometry, material );
+			this.player_model.position.x = this.get('position').x;
+			this.player_model.position.y = 2;
+			this.player_model.position.z = this.get('position').z;
 
-			scene.add( this.player_model.cube );
+			scene.add( this.player_model );
 		}
 	});
 	var playersCollection = Backbone.Firebase.Collection.extend({
@@ -26,38 +26,15 @@
 		url: "https://realmchat.firebaseio.com/players"
 	});
 	var players = new playersCollection();
-
-	players.on('add',function(player){
-		//console.log( player.get('name') + ' added to collection');
-		if(player.get('position')){
-			console.log( player.get('position') );
-		}
-	});
 	players.on('change',function(player){
 		console.log(player);
-		console.log(scene.children);
-		player.player_model.cube.position.set( player.get('position') );
+		//console.log(scene.children);
+		var new_pos = player.get('position');
+		player.player_model.position.set( new_pos.x, new_pos.y, new_pos.z );
 	});
 
-	// var get_init_players = function(){
-	// 	playersRef.once('value',function(playerSnap){
-	// 		playerSnap.forEach(function(p){
-	// 			var p_d = new player({
-	// 				id: p.key(), 
-	// 				name: p.child('profile').child('name').val(),
-	// 				avatar: p.child('profile').child('avatar').val(),
-	// 				position: p.child('position').val() || null
-	// 			});
 
-	// 			players.add( p_d );
-	// 		});
-	// 	},function(err){
-	// 		if(err)
-	// 			throw new Error(err);
-	// 	});
-	// };
-	// get_init_players();
-
+	//raytracing for clicks and whatnot
 	var raycaster = new THREE.Raycaster(); // create once
 	var mouse = new THREE.Vector2(); // create once
 
