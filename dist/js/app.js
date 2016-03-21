@@ -27,7 +27,7 @@
 	});
 	var players = new playersCollection();
 	players.on('change',function(player){
-		console.log(player);
+		//console.log(player);
 		//console.log(scene.children);
 		var new_pos = player.get('position');
 		player.player_model.position.set( new_pos.x, new_pos.y, new_pos.z );
@@ -146,11 +146,11 @@
 			//update the position
 			//
 			var new_pos = {
-				x: intersects[0].point.x,
-				y: intersects[0].point.y,
-				z: intersects[0].point.z
+				x: Math.floor(intersects[0].point.x),
+				y: Math.floor(intersects[0].point.y),
+				z: Math.floor(intersects[0].point.z)
 			};
-
+			console.log(new_pos);
 			playersRef.child(ME.uid).child('position').set(new_pos);
 		}
 	}
