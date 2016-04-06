@@ -54,8 +54,6 @@
 			if(!last_pos ){
 				//console.log('no position set yet');
 				set_random_position(uid);
-			}else{
-				//console.log('we have a position!');
 			}
 		});
 	};
@@ -133,6 +131,7 @@
 	var camera, scene, renderer;
 
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+	var sel_mesh = false;
     function onDocumentMouseDown( event ) {
 		mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
 		mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
@@ -152,6 +151,17 @@
 			};
 			console.log(new_pos);
 			playersRef.child(ME.uid).child('position').set(new_pos);
+
+			//put grid mesh here depending on click (area)
+
+			//mesh for grid
+			if(!sel_mesh){
+				var geometry = new THREE.BoxGeometry( 50, -.5, 50 );
+				var material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
+				sel_mesh = new THREE.Mesh( geometry, material );
+				scene.add( sel_mesh );
+			}
+			sel_mesh.position.set( new_pos.x, new_pos.y, new_pos.z );
 		}
 	}
 
