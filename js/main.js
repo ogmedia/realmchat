@@ -168,7 +168,6 @@
 		mouse.x = ( (event.clientX - offset.left) / renderer.domElement.width ) * 2 - 1;
 		mouse.y = -( ( event.clientY - offset.top) / renderer.domElement.height ) * 2 + 1;
 		//console.log('clicked');
-		console.log(mouse);
 		raycaster.setFromCamera( mouse, camera );
 		// console.log('caster sent from mouse:');
 		// console.log(mouse);
@@ -190,20 +189,6 @@
 
 			var pos_x_grid = x_grid_block;
 			var pos_z_grid = z_grid_block;
-
-			console.log('x point intersect is:');
-			console.log(Math.floor(intersects[0].point.x) );
-			console.log('z point intersection is:');
-			console.log(Math.floor(intersects[0].point.z));
-			console.log('x block is:');
-			console.log(x_grid_block);
-			console.log('z block is: ');
-			console.log(z_grid_block);
-
-			console.log("x leftover is:");
-			console.log(x_constraint);
-			console.log("z leftover is:");
-			console.log(z_constraint);
 
 			var new_x = null;
 			var new_z = null;
@@ -242,9 +227,6 @@
 
  			}
 
-			console.log('block level:');
-			console.log("(" + x_grid_block + ", " + z_grid_block + ")");
-
 			var new_mesh_pos = {
 				x: new_x,
 				y:1,
@@ -257,12 +239,8 @@
 				z: new_z,
 			};
 
-			console.log('new square mesh position');
-			console.log(new_mesh_pos);
-
 			//get rid of original position before writing new
 			var myPlayer = players.findWhere({id:ME.uid});
-			console.log(myPlayer);
 			var playerGrid = myPlayer.get('grid');
 			if(playerGrid){
 				if(playerGrid.x && playerGrid.z){
