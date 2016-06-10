@@ -164,10 +164,11 @@
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	var sel_mesh = false;
     function onDocumentMouseDown( event ) {
-		mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
-		mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
+    	var offset =  $('#game-zone').offset();
+		mouse.x = ( (event.clientX - offset.left) / renderer.domElement.width ) * 2 - 1;
+		mouse.y = -( ( event.clientY - offset.top) / renderer.domElement.height ) * 2 + 1;
 		//console.log('clicked');
-		//console.log(mouse);
+		console.log(mouse);
 		raycaster.setFromCamera( mouse, camera );
 		// console.log('caster sent from mouse:');
 		// console.log(mouse);
