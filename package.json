@@ -4,7 +4,11 @@
   "description": "Real-time chat via grid style game",
   "main": "index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "start": "node server/server.js"
+  },
+  "config":{
+    "port":"8080"
   },
   "author": "",
   "license": "ISC",

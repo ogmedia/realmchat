@@ -6,7 +6,7 @@ const Hapi = require('hapi');
 const server = new Hapi.Server();
 server.connection({ 
     host: 'localhost', 
-    port: 8080 
+    port: process.env.npm_package_config_port 
 });
 
 //register plugins

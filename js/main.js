@@ -1,13 +1,27 @@
 (function(){
 
 	var grid_bounds = 500;
+	var grid_step_size = 50;
+	var grid_mesh = null;
 
 	var playersRef = new Firebase('https://realmchat.firebaseio.com/players');
+	var gridRef = new Firebase('https://realmchat.firebaseio.com/grid');
 	var ME = null;
 
 	//model and collection
 	var player = Backbone.Model.extend({
-		player_model: {},
+		player_model: null,
+		defaults:{
+			grid:{
+				x: 0,
+				z: 0
+			},
+			position:
+			{
+				x: 0,
+				z: 0
+			}
+		},
 		initialize: function(){
 			//console.log('NEW PLAYER MODEL');
 			var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
@@ -25,7 +39,18 @@
 		model:player,
 		url: "https://realmchat.firebaseio.com/players"
 	});
+
+	var gridCollectionX = Backbone.Firebase.Collection.extend({
+		url: "https://realmchat.firebaseio.com/grid/x"
+	});
+	var gridCollectionZ = Backbone.Firebase.Collection.extend({
+		url: "https://realmchat.firebaseio.com/grid/z"
+	});
+
 	var players = new playersCollection();
+	var gridTreeX = new gridCollectionX();
+	var gridTreeZ = new gridCollectionZ();
+
 	players.on('change',function(player){
 		//console.log(player);
 		//console.log(scene.children);
@@ -33,6 +58,12 @@
 		player.player_model.position.set( new_pos.x, new_pos.y, new_pos.z );
 	});
 
+	gridTreeX.on('change',function(axis){
+		console.log(axis);
+	});
+	gridTreeZ.on('change',function(axis){
+		console.log(axis);
+	});
 
 	//raytracing for clicks and whatnot
 	var raycaster = new THREE.Raycaster(); // create once
@@ -138,30 +169,125 @@
 		//console.log('clicked');
 		//console.log(mouse);
 		raycaster.setFromCamera( mouse, camera );
+		// console.log('caster sent from mouse:');
+		// console.log(mouse);
+		// console.log('caster sent from camera:');
+		// console.log(camera);
 
-		var intersects = raycaster.intersectObjects( scene.children );
-		//console.log(intersects);
+		var intersects = raycaster.intersectObjects( [grid_mesh] );
+		console.log("============");
 		if(intersects.length > 0){
 			//update the position
 			//
-			var new_pos = {
-				x: Math.floor(intersects[0].point.x),
-				y: Math.floor(intersects[0].point.y),
-				z: Math.floor(intersects[0].point.z)
+
+			//find the square in the grid constraints of that point
+			var x_grid_block = parseInt(Math.floor(intersects[0].point.x) / grid_step_size);
+			var z_grid_block = parseInt(Math.floor(intersects[0].point.z) / grid_step_size);
+
+			var x_constraint = parseInt(Math.floor(intersects[0].point.x) % grid_step_size);
+			var z_constraint = parseInt(Math.floor(intersects[0].point.z) % grid_step_size);
+
+			var pos_x_grid = x_grid_block;
+			var pos_z_grid = z_grid_block;
+
+			console.log('x point intersect is:');
+			console.log(Math.floor(intersects[0].point.x) );
+			console.log('z point intersection is:');
+			console.log(Math.floor(intersects[0].point.z));
+			console.log('x block is:');
+			console.log(x_grid_block);
+			console.log('z block is: ');
+			console.log(z_grid_block);
+
+			console.log("x leftover is:");
+			console.log(x_constraint);
+			console.log("z leftover is:");
+			console.log(z_constraint);
+
+			var new_x = null;
+			var new_z = null;
+
+ 			if(x_constraint > 0){
+ 				new_x = (pos_x_grid * grid_step_size) + (grid_step_size/2);
+ 				x_grid_block++;
+ 			}else if(x_constraint <0){
+				new_x = (pos_x_grid * grid_step_size) - (grid_step_size/2);
+ 				x_grid_block--;
+ 			}else{
+ 				if(pos_x_grid >= 0){
+ 			 		new_x = (pos_x_grid * grid_step_size) + (grid_step_size/2);
+ 					x_grid_block++;		
+ 				}else{
+					new_x = (pos_x_grid * grid_step_size) - (grid_step_size/2);
+ 					x_grid_block--;
+ 				}
+
+ 			}
+
+ 			if(z_constraint > 0 ){
+				new_z = (pos_z_grid * grid_step_size) + (grid_step_size/2);
+ 				z_grid_block++;
+ 			}else if(z_constraint < 0){
+				new_z = (pos_z_grid * grid_step_size) - (grid_step_size/2);
+ 				z_grid_block--;
+ 			}else{
+ 				if(pos_z_grid >= 0){
+ 					new_z = (pos_z_grid * grid_step_size) + (grid_step_size/2);
+ 					z_grid_block++;					
+ 				}else{
+ 					new_z = (pos_z_grid * grid_step_size) - (grid_step_size/2);
+ 					z_grid_block--;					
+ 				}
+
+ 			}
+
+			console.log('block level:');
+			console.log("(" + x_grid_block + ", " + z_grid_block + ")");
+
+			var new_mesh_pos = {
+				x: new_x,
+				y:1,
+				z: new_z,
 			};
-			console.log(new_pos);
+
+			var new_pos = {
+				x: new_x,
+				y:3,
+				z: new_z,
+			};
+
+			console.log('new square mesh position');
+			console.log(new_mesh_pos);
+
+			//get rid of original position before writing new
+			var myPlayer = players.findWhere({id:ME.uid});
+			console.log(myPlayer);
+			var playerGrid = myPlayer.get('grid');
+			if(playerGrid){
+				if(playerGrid.x && playerGrid.z){
+					gridRef.child('x').child(playerGrid.x).child(ME.uid).remove();
+					gridRef.child('z').child(playerGrid.z).child(ME.uid).remove();
+				}
+			}
+
+			//set the new pos
 			playersRef.child(ME.uid).child('position').set(new_pos);
+			playersRef.child(ME.uid).child('grid').set({ x: x_grid_block, z: z_grid_block });
+			
+			//set the new grid
+			gridRef.child('x').child(x_grid_block).child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
+			gridRef.child('z').child(z_grid_block).child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
 
 			//put grid mesh here depending on click (area)
 
 			//mesh for grid
 			if(!sel_mesh){
 				var geometry = new THREE.BoxGeometry( 50, -.5, 50 );
-				var material = new THREE.MeshBasicMaterial( { color: 0x00ff00} );
+				var material = new THREE.MeshBasicMaterial( { color: 0x00ff00,alphaMap: 0x666666} );
 				sel_mesh = new THREE.Mesh( geometry, material );
 				scene.add( sel_mesh );
 			}
-			sel_mesh.position.set( new_pos.x, new_pos.y, new_pos.z );
+			sel_mesh.position.set( new_mesh_pos.x, new_mesh_pos.y, new_mesh_pos.z );
 		}
 	}
 
@@ -178,6 +304,14 @@
 	init();
 	animate();
 
+
+	var check_player_collision = function(){
+		var myPlayer = players.findWhere({id:ME.uid});
+		var playerGrid = myPlayer.get('grid');
+
+	};
+
+
 	function init() {
 
 
@@ -193,15 +327,15 @@
 
 		var grid = function(){
 			// Grid
-			var size = grid_bounds, step = 50;
+			var size = grid_bounds, step = grid_step_size;
 			var gridHelper = new THREE.GridHelper( size, step );
 			scene.add( gridHelper );
 
 			//mesh for grid
 			var geometry = new THREE.BoxGeometry( 1000, 0, 1000 );
 			var material = new THREE.MeshBasicMaterial( { color: 0xffff00,wireframe:true } );
-			var mesh = new THREE.Mesh( geometry, material );
-			scene.add( mesh );
+			grid_mesh = new THREE.Mesh( geometry, material );
+			scene.add( grid_mesh );
 		};
 
 		var earth = function(){
