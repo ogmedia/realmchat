@@ -23,9 +23,16 @@
 			}
 		},
 		initialize: function(){
-			//console.log('NEW PLAYER MODEL');
+			var player_av = this.get('profile').avatar;
+
 			var geometry = new THREE.BoxGeometry( 12.5, 12.5, 12.5 );
-			var material = new THREE.MeshLambertMaterial( { color: 0xffff00, overdraw: 0.5 } );
+			var texture = new THREE.TextureLoader().load( player_av );
+			
+			texture.wrapS = THREE.RepeatWrapping;
+			texture.wrapT = THREE.RepeatWrapping;
+			//texture.repeat.set( 4, 4 );
+
+			var material = new THREE.MeshLambertMaterial( { color: 0xffff00, map: texture, overdraw: 0.5 } );
 			
 			this.player_model = new THREE.Mesh( geometry, material );
 			this.player_model.position.x = this.get('position').x;
