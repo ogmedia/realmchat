@@ -68,6 +68,11 @@ gulp.task('css',function(){
         .pipe(gulp.dest('dist/css'));
 });
 
+gulp.task('img',function(){
+    return gulp.src('img/*')
+        .pipe(gulp.dest('dist/img'));
+});
+
 // Watch Files For Changes
 gulp.task('watch', function() {
     gulp.watch(['js/*.js','css/*.css','views/layout/index.html','gulpfile.js', 'js/main.js'], ['lint', 'scripts']);
@@ -75,4 +80,4 @@ gulp.task('watch', function() {
 });
 
 // Default Task
-gulp.task('default', ['lint', 'sass', 'scripts','vendor', 'css','three','canvasrenderer','projector','watch']);
+gulp.task('default', ['lint', 'sass', 'scripts','vendor', 'css','img','three','canvasrenderer','projector']);

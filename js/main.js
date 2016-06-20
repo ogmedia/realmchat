@@ -47,6 +47,55 @@
 		url: "https://realmchat.firebaseio.com/grid/z"
 	});
 
+	var playersModalIcon = Backbone.View.extend({
+		tagName: 'span',
+		template: _.template('<img src="<%=image%>" class="img-circle" />'),
+		intialize: function(){
+			console.log(this.model);
+		},
+		render: function(){
+			this.$el.html( this.template( {image: this.model.get('avatar')} ) );
+			return this;
+		}
+	});
+	var playersModalView = Backbone.View.extend({
+		tagName: 'div',
+		className: 'modal fade',
+		template: _.template( $('#join-modal-template').html() ),
+		events:{
+			"click .join-chat": "join_chat",
+			"click .cancel-chat": "cancel_chat",
+		},
+		initialize: function(){
+			//remove the listener
+			document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+
+			//template first
+			this.$el.html( this.template() );
+
+			//then add the player icons
+			var t = this;
+			this.collection.forEach(function(p){
+				var pIcon = new playersModalIcon({model:p});
+				pIcon.render();
+				t.$el.find('.modal-body').append( pIcon.$el.html() );
+			});
+
+			//then show/render
+			this.render();
+		},
+		render: function(){
+			this.$el.modal({backdrop:'static'});
+			this.$el.modal('show');
+			return this;
+		},
+		cancel_chat: function(){
+			this.$el.modal('hide');
+			document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+		}
+	});
+
+
 	var players = new playersCollection();
 	var gridTreeX = new gridCollectionX();
 	var gridTreeZ = new gridCollectionZ();
@@ -56,13 +105,6 @@
 		//console.log(scene.children);
 		var new_pos = player.get('position');
 		player.player_model.position.set( new_pos.x, new_pos.y, new_pos.z );
-	});
-
-	gridTreeX.on('change',function(axis){
-		console.log(axis);
-	});
-	gridTreeZ.on('change',function(axis){
-		console.log(axis);
 	});
 
 	//raytracing for clicks and whatnot
@@ -161,24 +203,18 @@
 	var container, stats;
 	var camera, scene, renderer;
 
+
 	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	var sel_mesh = false;
     function onDocumentMouseDown( event ) {
     	var offset =  $('#game-zone').offset();
 		mouse.x = ( (event.clientX - offset.left) / renderer.domElement.width ) * 2 - 1;
 		mouse.y = -( ( event.clientY - offset.top) / renderer.domElement.height ) * 2 + 1;
-		//console.log('clicked');
 		raycaster.setFromCamera( mouse, camera );
-		// console.log('caster sent from mouse:');
-		// console.log(mouse);
-		// console.log('caster sent from camera:');
-		// console.log(camera);
 
 		var intersects = raycaster.intersectObjects( [grid_mesh] );
-		console.log("============");
 		if(intersects.length > 0){
 			//update the position
-			//
 
 			//find the square in the grid constraints of that point
 			var x_grid_block = parseInt(Math.floor(intersects[0].point.x) / grid_step_size);
@@ -244,8 +280,8 @@
 			var playerGrid = myPlayer.get('grid');
 			if(playerGrid){
 				if(playerGrid.x && playerGrid.z){
-					gridRef.child('x').child(playerGrid.x).child(ME.uid).remove();
-					gridRef.child('z').child(playerGrid.z).child(ME.uid).remove();
+					gridRef.child('x').child(playerGrid.x).child('players').child(ME.uid).remove();
+					gridRef.child('z').child(playerGrid.z).child('players').child(ME.uid).remove();
 				}
 			}
 
@@ -254,19 +290,21 @@
 			playersRef.child(ME.uid).child('grid').set({ x: x_grid_block, z: z_grid_block });
 			
 			//set the new grid
-			gridRef.child('x').child(x_grid_block).child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
-			gridRef.child('z').child(z_grid_block).child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
+			gridRef.child('x').child(x_grid_block).child('players').child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
+			gridRef.child('z').child(z_grid_block).child('players').child(ME.uid).set(Firebase.ServerValue.TIMESTAMP);
 
 			//put grid mesh here depending on click (area)
 
 			//mesh for grid
 			if(!sel_mesh){
-				var geometry = new THREE.BoxGeometry( 50, -.5, 50 );
+				var geometry = new THREE.BoxGeometry( 50, '-.5', 50 );
 				var material = new THREE.MeshBasicMaterial( { color: 0x00ff00,alphaMap: 0x666666} );
 				sel_mesh = new THREE.Mesh( geometry, material );
 				scene.add( sel_mesh );
 			}
 			sel_mesh.position.set( new_mesh_pos.x, new_mesh_pos.y, new_mesh_pos.z );
+
+			check_player_collision( x_grid_block, z_grid_block );
 		}
 	}
 
@@ -279,20 +317,61 @@
 		$('#header').append( stats.domElement );	
 	};
 	statistics();
-
 	init();
 	animate();
 
 
-	var check_player_collision = function(){
-		var myPlayer = players.findWhere({id:ME.uid});
+	var check_player_collision = function(x,z){
+		var myPlayer = players.findWhere({id: ME.uid});
 		var playerGrid = myPlayer.get('grid');
+		var xNode = gridTreeX.findWhere({id:x.toString()});
+		var xNodePlayers = Object.keys(xNode.get('players')).filter(function(p_id){
+			if(p_id !== ME.uid){
+				return true;
+			}else{
+				return false;
+			}
+		});
+
+		//found one on the x
+		if(xNodePlayers.length > 0){
+			var zNode = gridTreeZ.findWhere({ id: z.toString() });
+			var matchedPlayers = Object.keys(zNode.get('players')).filter(function(p_id){
+				if(p_id !== ME.uid){
+					return true;
+				}else{
+					return false;
+				}
+			});
+
+			if( matchedPlayers.length > 0 ){				
+				Promise.all( matchedPlayers.map(get_player_info) ).then(function(d){
+					display_players_modal(d);
+				});
+			}
+		}
+	};
+
+	var display_players_modal = function(ps){
+		var psinchat = ps.map(function(z){
+			return z;
+		});
+		var currPC = new Backbone.Collection(psinchat);
+		new playersModalView({collection:currPC});
 
 	};
 
+	var get_player_info = function(uid){
+		return new Promise(function(resolve,reject){
+			playersRef.child(uid).child('profile').once('value',function(pSnap){
+				resolve( pSnap.val() );
+			},function(err){
+				reject(err);
+			});
+		});
+	};
 
 	function init() {
-
 
 		container = document.createElement( 'div' );
 		//document.body.appendChild( container );

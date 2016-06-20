@@ -8,7 +8,7 @@
     "start": "node server/server.js"
   },
   "config":{
-    "port":"8080"
+    "port":"8301"
   },
   "author": "",
   "license": "ISC",
