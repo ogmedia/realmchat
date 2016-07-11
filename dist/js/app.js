@@ -2,7 +2,7 @@ var AUTH = (function(RC_APP){
 	console.log('AUTH MODULE LOADED');
 	
 })(RC_APP || {});
-var RC_APP = (function(THREE, PEER_CON ){
+var RC_APP = (function(THREE ){
 
 	var grid_bounds = 500;
 	var grid_step_size = 50;
@@ -116,6 +116,8 @@ var RC_APP = (function(THREE, PEER_CON ){
 			//var p_ids = _.pluck(this.collection,'peer_id');
 			//console.log( p_ids );
 			VC.join(this.collection);
+			PEER_CON.connectToPeers(this.collection);
+			
 		},
 	});
 
@@ -514,11 +516,11 @@ var RC_APP = (function(THREE, PEER_CON ){
 		}
 	};
 
-})(THREE, PEER_CON || {} );
+})(THREE );
 
 
 //peer
-var PEER_CON = (function(rc_app, VC){
+var PEER_CON = (function(rc_app ){
 	console.log('peer setup script');
 	var peer_con = new Peer({host: 'localhost', port: 9000, debug:3, path: '/peerjs' });	
 	var peer_id = null;
@@ -540,34 +542,21 @@ var PEER_CON = (function(rc_app, VC){
 		call.answer(mediaStream);
 	});
 
-	var setConnEvents = function(call){
-		this.call.on('stream', function(stream) {
-			console.log('call answered, setting up video');
-		  // `stream` is the MediaStream of the remote peer.
-		  // Here you'd add it to an HTML video/canvas element.
-			//$('#their-video-cont').show();
-			// videojs("their-video",{width:300}).ready(function(){
-			//   var myPlayer = this;
-
-			//   var url = window.URL || window.webkitURL;
-			//   myPlayer.src( url.createObjectURL( stream ) );
-			//   myPlayer.play();
-			//   // Player (this) is initialized and ready.
-			// //});
-		});
-	};
-
 	return {
-			call: call,
+			//call: call,
 			peer_id: peer_id,
 
-			connectToPeer: function(peerId){
-				this.call = peer_con.call(peerId, VC.mediaStream );
-				this.setConnEvents(this.call);
+			connectToPeers: function(peers){
+				console.log('trying to connect to peers]');
+				peers.forEach(function(p){
+					console.log('calling peer-ID....: ' + p.get('peer_id'));
+					var c = peer_con.call( p.get('peer_id'), VC.mediaStream );
+					VC.setConnEvents(c,p);
+				});
 			}
 	};
 
-})(RC_APP || {}, VC );
+})(RC_APP );
 
 
 //the video chat module
@@ -684,7 +673,7 @@ var VC = (function(window,$){
 		},
 		render: function(){
 			$('.modal-body').append( this.el );
-			
+
 		}
 	});
 
@@ -697,9 +686,26 @@ var VC = (function(window,$){
 				var p_id = p.get('peer_id');
 				new userView({
 					model: p,
-					id: p.get('id')
+					id: 'video-' + p.get('id')
 				});
 				console.log(p_id);
+			});
+		},
+		setConnEvents: function(call,peer){
+			console.log('setting up stream when answered for video-' + peer.get('id') );
+			
+			call.on('stream', function(stream) {
+				console.log('call answered, setting up video');
+			  // `stream` is the MediaStream of the remote peer.
+			  // Here you'd add it to an HTML video/canvas element.
+				
+				videojs("video-"+peer.get('id'),{width:200}).ready(function(){
+				  var myPlayer = this;
+				  var url = window.URL || window.webkitURL;
+				  myPlayer.src( url.createObjectURL( stream ) );
+				  myPlayer.play();
+				  // Player (this) is initialized and ready.
+				});
 			});
 		}
 	};
