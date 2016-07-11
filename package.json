@@ -29,6 +29,7 @@
     "vision": "^4.0.1"
   },
   "dependencies": {
+    "express": "^4.14.0",
     "peer": "^0.2.8"
   }
 }

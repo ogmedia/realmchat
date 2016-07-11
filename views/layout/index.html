@@ -40,7 +40,7 @@
         </div>
       </header>
 
-      <section class="row-fluid">
+      <section class="row-fluid" id="zone-container">
         <div id="game-zone"></div>
       </section>
 
@@ -59,7 +59,6 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     
     <script src="js/vendor.min.js"></script>
-
     <script src="js/three.min.js"></script>    
     <script src="js/projector.js"></script>
     <script src="js/canvasrenderer.js"></script>
@@ -85,6 +84,15 @@
   </body>
 </html>
 
+<script type="text/template" id="my-video-icon-template">
+    <video id="my-video" class="video-js">
+          <p class="vjs-no-js">
+            To view this video please enable JavaScript, and consider upgrading to a web browser that
+            <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+          </p>
+      </video>
+</script>
+
 <script type="text/template" id="join-modal-template">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -96,7 +104,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default cancel-chat">No Thanks</button>
-        <button type="button" class="btn btn-primary">Join!</button>
+        <button type="button" class="btn btn-primary join-chat">Join!</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

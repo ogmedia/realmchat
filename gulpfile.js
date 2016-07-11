@@ -24,10 +24,10 @@ gulp.task('sass', function() {
 
 // Concatenate & Minify JS
 gulp.task('scripts', function() {
-    return gulp.src('js/*.js')
+    return gulp.src('js/app/*.js')
         .pipe(concat('app.js'))
        // .pipe(rename('app.min.js'))
-        .pipe(uglify())
+       // .pipe(uglify())
         .pipe(gulp.dest('dist/js'));
 });
 
@@ -79,7 +79,7 @@ gulp.task('html',function(){
 
 // Watch Files For Changes
 gulp.task('watch', function() {
-    gulp.watch(['js/*.js','css/*.css','views/layout/index.html','gulpfile.js', 'js/main.js'], ['lint', 'scripts']);
+    gulp.watch(['js/*.js','css/*.css','views/layout/index.html','gulpfile.js', 'js/app/peer.js', 'js/app/vc.js', 'js/app/main.js'], ['lint', 'scripts']);
     gulp.watch('scss/*.scss', ['sass']);
 });
 
