@@ -7,8 +7,8 @@
     "test": "test",
     "start": "node server/server.js"
   },
-  "config":{
-    "port":"8301"
+  "config": {
+    "port": "8301"
   },
   "author": "",
   "license": "ISC",
@@ -27,5 +27,8 @@
     "jshint": "^2.9.1",
     "three": "^0.75.0",
     "vision": "^4.0.1"
+  },
+  "dependencies": {
+    "peer": "^0.2.8"
   }
 }

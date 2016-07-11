@@ -30,7 +30,6 @@
 			
 			texture.wrapS = THREE.RepeatWrapping;
 			texture.wrapT = THREE.RepeatWrapping;
-			//texture.repeat.set( 4, 4 );
 
 			var material = new THREE.MeshLambertMaterial( { color: 0xffff00, map: texture, overdraw: 0.5 } );
 			
@@ -305,7 +304,7 @@
 			//mesh for grid
 			if(!sel_mesh){
 				var geometry = new THREE.BoxGeometry( 50, '-.5', 50 );
-				var material = new THREE.MeshBasicMaterial( { color: 0x00ff00,alphaMap: 0x666666} );
+				var material = new THREE.MeshBasicMaterial( { color: 0x66ff66} );
 				sel_mesh = new THREE.Mesh( geometry, material );
 				scene.add( sel_mesh );
 			}
