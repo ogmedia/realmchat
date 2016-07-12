@@ -23,9 +23,9 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="img/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
+    <link rel="kik-icon" href="img/apple-icon-180x180.png">
     <!-- Bootstrap -->
     <link href="css/app.css" rel="stylesheet">
-
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -34,7 +34,7 @@
     <![endif]-->
   </head>
   <body>
-    <div class="container">
+    <div class="row-fluid">
       <header class="row-fluid" id="header">
         <div class="col-xs-12">
         </div>
@@ -45,12 +45,12 @@
       </section>
 
       <footer>
-          <div
+          <!--<div
             class="fb-like"
             data-share="true"
             data-width="450"
             data-show-faces="true">
-          </div>
+          </div> -->
       </footer>
     </div>
 
@@ -91,6 +91,22 @@
             <a href="http://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
           </p>
       </video>
+</script>
+
+<script type="text/template" id="get-started-modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Welcome to RealmChat</h4>
+      </div>
+      <div class="modal-body">
+        Tap on a square to move your avatar and chat with others.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary">Get Started!</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
 </script>
 
 <script type="text/template" id="join-modal-template">

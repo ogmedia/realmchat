@@ -29,7 +29,9 @@
     "vision": "^4.0.1"
   },
   "dependencies": {
+    "@kikinteractive/kik": "^2.0.7",
     "express": "^4.14.0",
+    "firebase": "^3.1.0",
     "peer": "^0.2.8"
   }
 }

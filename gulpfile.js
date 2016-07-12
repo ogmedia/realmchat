@@ -24,7 +24,7 @@ gulp.task('sass', function() {
 
 // Concatenate & Minify JS
 gulp.task('scripts', function() {
-    return gulp.src('js/app/*.js')
+    return gulp.src(['js/app/views/*.js','js/app/collections/*.js','js/app/models/*.js','js/app/*.js'])
         .pipe(concat('app.js'))
        // .pipe(rename('app.min.js'))
        // .pipe(uglify())
@@ -79,7 +79,22 @@ gulp.task('html',function(){
 
 // Watch Files For Changes
 gulp.task('watch', function() {
-    gulp.watch(['js/*.js','css/*.css','views/layout/index.html','gulpfile.js', 'js/app/peer.js', 'js/app/vc.js', 'js/app/main.js'], ['lint', 'scripts']);
+    gulp.watch(['js/*.js', 
+        'js/app/models/*.js', 
+        'js/app/collections/*.js', 
+        'js/app/views/*.js', 
+        'css/*.css',
+        'views/layout/index.html',
+        'gulpfile.js', 
+        'js/app/peer.js', 
+        'js/app/vc.js', 
+        'js/app/main.js', 
+        'js/app/auth.js',
+        'js/app/zone.js',
+        'js/app/models/player.js',
+        'js/app/views/views.js',
+        'js/app/collections/collection.js'], 
+        ['lint', 'scripts']);
     gulp.watch('scss/*.scss', ['sass']);
 });
 
