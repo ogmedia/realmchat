@@ -24,7 +24,15 @@ gulp.task('sass', function() {
 
 // Concatenate & Minify JS
 gulp.task('scripts', function() {
-    return gulp.src(['js/app/views/*.js','js/app/collections/*.js','js/app/models/*.js','js/app/*.js'])
+    return gulp.src(['js/app/auth.js',
+        'js/app/views/*.js',
+        'js/app/collections/*.js',
+        'js/app/models/*.js',
+        'js/app/zone.js',
+        'js/app/peer.js',
+        'js/app/vc.js',
+        'js/app/main.js',
+        ])
         .pipe(concat('app.js'))
        // .pipe(rename('app.min.js'))
        // .pipe(uglify())
@@ -41,10 +49,24 @@ gulp.task('vendor', function() {
         .pipe(gulp.dest('dist/js'));
 });
 
+
+gulp.task('hammer', function() {
+    return gulp.src('js/lib/vendors/hammer.min.js')
+       // .pipe(rename('app.min.js'))
+       // .pipe(uglify())
+        .pipe(gulp.dest('dist/js'));
+});
+
 gulp.task('three', function() {
     return gulp.src('js/lib/3d/three.min.js')
         .pipe(concat('three.min.js'))
         .pipe(gulp.dest('dist'))
+        //.pipe(uglify())
+        .pipe(gulp.dest('dist/js'));
+});
+
+gulp.task('require', function() {
+    return gulp.src('js/require.js')
         //.pipe(uglify())
         .pipe(gulp.dest('dist/js'));
 });
@@ -82,21 +104,21 @@ gulp.task('watch', function() {
     gulp.watch(['js/*.js', 
         'js/app/models/*.js', 
         'js/app/collections/*.js', 
+        'js/app/auth.js',
         'js/app/views/*.js', 
         'css/*.css',
         'views/layout/index.html',
+        'js/app/views/views.js',
+        'js/app/models/player.js',
+        'js/app/collections/collection.js',
         'gulpfile.js', 
         'js/app/peer.js', 
         'js/app/vc.js', 
-        'js/app/main.js', 
-        'js/app/auth.js',
         'js/app/zone.js',
-        'js/app/models/player.js',
-        'js/app/views/views.js',
-        'js/app/collections/collection.js'], 
-        ['lint', 'scripts']);
+        'js/app/main.js'], 
+        ['lint', 'scripts','hammer']);
     gulp.watch('scss/*.scss', ['sass']);
 });
 
 // Default Task
-gulp.task('default', ['lint', 'sass', 'scripts','vendor', 'css','img','three','canvasrenderer','projector','html']);
+gulp.task('default', ['lint', 'sass', 'scripts','hammer','vendor', 'css','img','three','canvasrenderer','projector','html','require']);
